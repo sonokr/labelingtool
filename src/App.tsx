@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useKey } from "react-use";
 import "./App.css";
 const { useState, useRef } = React;
 
@@ -10,20 +11,38 @@ const getExt = (filename: string) => {
 
 function App() {
   const [imageList, setImageList] = useState<File[]>([]);
+  const [numberOfImage, setNumberOfImage] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [imageDetail, setImageDetail] = useState({
+    filename: "",
+    width: 0,
+    height: 0,
+  });
 
   const IMAGE_ID = "image";
-  const ANNOTATION_ID = "annotation";
 
   const imageCanvasRef = useRef<HTMLCanvasElement>(null);
-  const imageContext = imageCanvasRef.current?.getContext("2d");
-  const drawCanvasRef = useRef<HTMLCanvasElement>(null);
-  const drawContext = drawCanvasRef.current?.getContext("2d");
 
   useEffect(() => {
     // TODO: Canvasに画像を描画する処理
-    console.log("The index has changed.", currentIndex);
-  }, [currentIndex]);
+    if (imageList.length === 0) return;
+    const file = imageList[currentIndex];
+    const img = new Image();
+    img.src = window.URL.createObjectURL(file);
+    img.onload = () => {
+      if (!imageCanvasRef.current) return;
+      imageCanvasRef.current.width = img.width;
+      imageCanvasRef.current.height = img.height;
+      const context = imageCanvasRef.current.getContext("2d");
+      if (!context) return;
+      context.drawImage(img, 0, 0);
+      setImageDetail({
+        filename: file.name,
+        width: img.width,
+        height: img.height,
+      });
+    };
+  }, [currentIndex, imageList]);
 
   const onDirectorySelected = (files: FileList | null) => {
     if (files === null) return;
@@ -35,14 +54,27 @@ function App() {
       }
     }
     setImageList(tempImageList);
+    setNumberOfImage(tempImageList.length - 1);
   };
 
-  const handleMouseDown = (e: any) => {
-    console.log(e);
-    // TODO: クリックした位置に円を描画する．
-    // TODO: 座標を記録する．
-    return;
+  const nextImage = () => {
+    if (currentIndex === numberOfImage) {
+      setCurrentIndex(0);
+      return;
+    }
+    setCurrentIndex(currentIndex + 1);
   };
+
+  const previousImage = () => {
+    if (currentIndex === 0) {
+      setCurrentIndex(numberOfImage);
+      return;
+    }
+    setCurrentIndex(currentIndex - 1);
+  };
+
+  useKey("ArrowRight", nextImage);
+  useKey("ArrowLeft", previousImage);
 
   return (
     <div className="App">
@@ -55,18 +87,18 @@ function App() {
         directory=""
         webkitdirectory=""
       />
-      {imageList?.map((image: File) => (
-        <div key={image.name}>
-          <p>{image.name}</p>
-        </div>
-      ))}
+      <div>
+        <input disabled value={imageDetail.filename} />
+        <input disabled value={imageDetail.width} />
+        <input disabled value={imageDetail.height} />
+      </div>
+      <p>
+        {currentIndex}/{numberOfImage}
+      </p>
+      <button onClick={previousImage}>Previous</button>
+      <button onClick={nextImage}>Next</button>
       <div>
         <canvas ref={imageCanvasRef} id={IMAGE_ID}></canvas>
-        <canvas
-          ref={drawCanvasRef}
-          id={ANNOTATION_ID}
-          onMouseDown={handleMouseDown}
-        ></canvas>
       </div>
     </div>
   );
