@@ -1,6 +1,9 @@
 import React, { useEffect } from "react";
 import { useKey } from "rooks";
 import "./App.css";
+import { Row, Col, Input, Button, List } from "antd";
+import InfiniteScroll from "react-infinite-scroller";
+import { CaretLeftOutlined, CaretRightOutlined } from "@ant-design/icons";
 const { useState, useRef } = React;
 
 interface Annotation {
@@ -190,54 +193,134 @@ const App = () => {
     link.click();
   };
 
+  const handleInfiniteOnLoad = () => {
+    return;
+  };
+
   return (
     <div className="App">
-      <input
-        type="file"
-        onChange={(e) => {
-          onDirectorySelected(e.target.files !== null ? e.target.files : null);
-        }}
-        /* @ts-expect-error */
-        directory=""
-        webkitdirectory=""
-      />
-      <div>
-        <input disabled value={imageDetail.filename} id="filename" />
-        <input disabled value={imageDetail.width} id="width" />
-        <input disabled value={imageDetail.height} id="height" />
-      </div>
-      <div>
-        <input disabled value={annotation.x} id="xCoordinate" />
-        <input disabled value={annotation.y} id="yCoordinate" />
-        <input
-          onChange={(e) => onVisibilityChange(Number(e.target.value))}
-          value={annotation.visibility}
-          type="number"
-          id="visibility"
-        />
-      </div>
-      <p>
-        {index}/{numberOfImage}
-      </p>
-      <button onClick={previousImage}>Previous</button>
-      <button onClick={nextImage}>Next</button>
-      <button onClick={outputLabel}>Output Label.csv</button>
-      <div className="canvas-wrapper">
-        <canvas ref={imageCanvasRef} id="image"></canvas>
-        <canvas
-          ref={annotationCanvasRef}
-          id="annotation"
-          onMouseDown={(e) =>
-            handleMouseDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
-          }
-          onMouseUp={(e) =>
-            handleMouseUp(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
-          }
-          onMouseMove={(e) =>
-            handleMouseMove(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
-          }
-        ></canvas>
-      </div>
+      <Row gutter={16}>
+        <Col>
+          <h2>Labelingtool</h2>
+          <input
+            type="file"
+            onChange={(e) => {
+              onDirectorySelected(
+                e.target.files !== null ? e.target.files : null
+              );
+            }}
+            /* @ts-expect-error */
+            directory=""
+            webkitdirectory=""
+          />
+          <table>
+            <tr>
+              <th>Name</th>
+              <td>
+                <Input disabled value={imageDetail.filename} id="filename" />
+              </td>
+            </tr>
+            <tr>
+              <th>Width</th>
+              <td>
+                <Input disabled value={imageDetail.width} id="width" />
+              </td>
+            </tr>
+            <tr>
+              <th>Height</th>
+              <td>
+                <Input disabled value={imageDetail.height} id="height" />
+              </td>
+            </tr>
+            <tr>
+              <th>X coordinate</th>
+              <td>
+                <Input disabled value={annotation.x} id="xCoordinate" />
+              </td>
+            </tr>
+            <tr>
+              <th>Y coordinate</th>
+              <td>
+                <Input disabled value={annotation.y} id="yCoordinate" />
+              </td>
+            </tr>
+            <tr>
+              <th>Visibility</th>
+              <td>
+                <Input
+                  onChange={(e) => onVisibilityChange(Number(e.target.value))}
+                  value={annotation.visibility}
+                  type="number"
+                  id="visibility"
+                />
+              </td>
+            </tr>
+          </table>
+          <p>
+            {index}/{numberOfImage}
+          </p>
+          <div>
+            <Button
+              onClick={previousImage}
+              shape="circle"
+              icon={<CaretLeftOutlined />}
+            ></Button>
+            <Button
+              onClick={nextImage}
+              shape="circle"
+              icon={<CaretRightOutlined />}
+            ></Button>
+          </div>
+          {/* TODO:
+              When each element in the list is clicked,
+              the image should be displayed. */}
+          <div style={{ height: "700px", overflow: "auto" }}>
+            <InfiniteScroll
+              initialLoad={false}
+              pageStart={0}
+              loadMore={handleInfiniteOnLoad}
+              hasMore={false}
+              useWindow={false}
+            >
+              <List
+                dataSource={fileList}
+                footer={
+                  <div>
+                    <b>Labeded images: 0/100</b>
+                  </div>
+                }
+                renderItem={(item) => (
+                  <List.Item key={item.name}>
+                    <div>{item.name}</div>
+                    <div>Not Labeled</div>
+                  </List.Item>
+                )}
+              ></List>
+            </InfiniteScroll>
+          </div>
+          <Button onClick={outputLabel}>Output Label.csv</Button>
+        </Col>
+        <Col>
+          <div>
+            <div className="canvas-wrapper">
+              <canvas ref={imageCanvasRef} id="image"></canvas>
+              <canvas
+                ref={annotationCanvasRef}
+                id="annotation"
+                onMouseDown={(e) =>
+                  handleMouseDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+                }
+                onMouseUp={(e) =>
+                  handleMouseUp(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+                }
+                onMouseMove={(e) =>
+                  handleMouseMove(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+                }
+              ></canvas>
+            </div>
+          </div>
+        </Col>
+      </Row>
     </div>
   );
 };
