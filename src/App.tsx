@@ -56,9 +56,8 @@ const App = () => {
   let isDrawing = false;
 
   // Canvas
-  const imageCanvasRef = useRef<HTMLCanvasElement>(null);
-  const imageCanvas = imageCanvasRef.current;
-  const imageContext = imageCanvas?.getContext("2d");
+  const imageRef = useRef<HTMLImageElement>(null);
+  const image = imageRef.current;
   const annotationCanvasRef = useRef<HTMLCanvasElement>(null);
   const annotationCanvas = annotationCanvasRef.current;
   const annotationContext = annotationCanvas?.getContext("2d");
@@ -123,20 +122,19 @@ const App = () => {
     if (fileList.length === 0) return;
     const file = fileList[index];
 
-    const img = new Image();
-    img.src = window.URL.createObjectURL(file);
-    img.onload = () => {
-      if (!imageCanvas || !imageContext) return;
-      imageCanvas.width = img.width;
-      imageCanvas.height = img.height;
-      imageContext.drawImage(img, 0, 0);
-
-      setImageDetail({
-        filename: file.name,
-        width: img.width,
-        height: img.height,
-      });
+    const fr = new FileReader();
+    fr.readAsDataURL(file);
+    fr.onload = () => {
+      if (!image) return;
+      image.src = fr.result as string;
     };
+
+    if (!image) return;
+    setImageDetail({
+      filename: file.name,
+      width: image.width,
+      height: image.height,
+    });
 
     // If already annotated. Display it.
     if (annotationList[file.name] !== undefined) {
@@ -267,7 +265,7 @@ const App = () => {
   return (
     <div className="App">
       <Row gutter={16}>
-        <Col>
+        <Col span={4}>
           <h2>Labelingtool</h2>
           <input
             type="file"
@@ -418,25 +416,23 @@ const App = () => {
           </div>
           <Button onClick={outputLabel}>Output Label.csv</Button>
         </Col>
-        <Col>
-          <div>
-            <div className="canvas-wrapper">
-              {/* TODO: Use <img> instead of <canvas> */}
-              <canvas ref={imageCanvasRef} id="image"></canvas>
-              <canvas
-                ref={annotationCanvasRef}
-                id="annotation"
-                onMouseDown={(e) =>
-                  handleMouseDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
-                }
-                onMouseUp={(e) =>
-                  handleMouseUp(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
-                }
-                onMouseMove={(e) =>
-                  handleMouseMove(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
-                }
-              ></canvas>
-            </div>
+        <Col span={16}>
+          <div className="canvas-wrapper">
+            <canvas
+              ref={annotationCanvasRef}
+              style={{ zIndex: 99 }}
+              id="annotation"
+              onMouseDown={(e) =>
+                handleMouseDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+              }
+              onMouseUp={(e) =>
+                handleMouseUp(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+              }
+              onMouseMove={(e) =>
+                handleMouseMove(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
+              }
+            ></canvas>
+            <img ref={imageRef} alt="" />
           </div>
         </Col>
       </Row>
