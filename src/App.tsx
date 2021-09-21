@@ -56,8 +56,6 @@ const App = () => {
   let isDrawing = false;
 
   // Canvas
-  const canvasWrapperRef = useRef<HTMLDivElement>(null);
-  const canvasWrapper = canvasWrapperRef.current;
   const imageCanvasRef = useRef<HTMLCanvasElement>(null);
   const imageCanvas = imageCanvasRef.current;
   const imageContext = imageCanvas?.getContext("2d");
@@ -125,16 +123,12 @@ const App = () => {
     if (fileList.length === 0) return;
     const file = fileList[index];
 
-    if (!imageCanvas || !canvasWrapper) return;
-    imageCanvas.width = canvasWrapper.clientWidth;
-    imageCanvas.height = canvasWrapper.clientHeight;
-
     const img = new Image();
     img.src = window.URL.createObjectURL(file);
     img.onload = () => {
       if (!imageCanvas || !imageContext) return;
-      const scale = imageCanvas.width / img.width;
-      imageContext.setTransform(scale, 0, 0, scale, 0, 0);
+      imageCanvas.width = img.width;
+      imageCanvas.height = img.height;
       imageContext.drawImage(img, 0, 0);
 
       setImageDetail({
@@ -376,9 +370,6 @@ const App = () => {
               icon={<CaretRightOutlined />}
             ></Button>
           </div>
-          {/* TODO:
-              When each element in the list is clicked,
-              the image should be displayed. */}
           <div style={{ height: "300px", overflow: "auto" }}>
             <InfiniteScroll
               initialLoad={false}
@@ -429,7 +420,8 @@ const App = () => {
         </Col>
         <Col>
           <div>
-            <div ref={canvasWrapperRef} className="canvas-wrapper">
+            <div className="canvas-wrapper">
+              {/* TODO: Use <img> instead of <canvas> */}
               <canvas ref={imageCanvasRef} id="image"></canvas>
               <canvas
                 ref={annotationCanvasRef}
