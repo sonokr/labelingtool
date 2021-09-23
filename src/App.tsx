@@ -181,9 +181,12 @@ const App = () => {
             ></Button>
           </div>
           <FileList
-            fileList={fileList}
+            numberOfImage={numberOfImage}
+            filename={filename}
+            label={label}
             labelList={labelList}
             setIndex={setIndex}
+            setLabelList={setLabelList}
           />
           <Button onClick={outputLabel}>Output Label.csv</Button>
         </Col>

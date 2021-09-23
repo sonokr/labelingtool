@@ -5,16 +5,44 @@ import InfiniteScroll from "react-infinite-scroller";
 const { Text } = Typography;
 
 type Props = {
-  fileList: File[];
+  numberOfImage: number;
+  filename: string;
+  label: Label;
   labelList: LabelList;
   setIndex: Dispatch<SetStateAction<number>>;
+  setLabelList: Dispatch<SetStateAction<LabelList>>;
 };
 
-const FileList: FC<Props> = ({ fileList, labelList, setIndex }) => {
+const FileList: FC<Props> = ({
+  numberOfImage,
+  filename,
+  label,
+  labelList,
+  setIndex,
+  setLabelList,
+}) => {
   let numberOfLabeledImage = 0;
   for (const key in labelList) {
     if (labelList[key].isLabeled) numberOfLabeledImage++;
   }
+
+  const labelListToDisplay = [];
+  for (const [key, value] of Object.entries(labelList)) {
+    labelListToDisplay.push(
+      key === filename
+        ? { filename: filename, isLabeled: label.isLabeled }
+        : { filename: key, isLabeled: value.isLabeled }
+    );
+  }
+
+  const onRowClicked = (index: number) => {
+    setLabelList({
+      ...labelList,
+      [filename]: { ...label },
+    });
+    setIndex(index);
+  };
+
   return (
     <>
       <div style={{ height: "300px", overflow: "auto" }}>
@@ -28,12 +56,12 @@ const FileList: FC<Props> = ({ fileList, labelList, setIndex }) => {
           useWindow={false}
         >
           <List
-            dataSource={Object.entries(labelList)}
-            renderItem={([filename, label], index) => (
-              <List.Item key={index} onClick={() => setIndex(index)}>
+            dataSource={labelListToDisplay}
+            renderItem={({ filename, isLabeled }, index) => (
+              <List.Item key={index} onClick={() => onRowClicked(index)}>
                 <div>{filename}</div>
                 <div>
-                  {label.isLabeled === true ? (
+                  {isLabeled === true ? (
                     <Text type="success">Labeled</Text>
                   ) : (
                     <Text type="danger">Not Labeled</Text>
@@ -48,7 +76,7 @@ const FileList: FC<Props> = ({ fileList, labelList, setIndex }) => {
         <div>
           <b>
             All images are{" "}
-            {numberOfLabeledImage !== fileList.length ? (
+            {numberOfLabeledImage !== numberOfImage ? (
               <Text type="danger">NOT </Text>
             ) : (
               ""
@@ -57,7 +85,7 @@ const FileList: FC<Props> = ({ fileList, labelList, setIndex }) => {
           </b>
         </div>
         <Text>
-          Labeded images: {numberOfLabeledImage}/{fileList.length}
+          Labeded images: {numberOfLabeledImage}/{numberOfImage}
         </Text>
       </div>
     </>
