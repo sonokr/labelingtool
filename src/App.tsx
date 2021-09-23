@@ -1,17 +1,14 @@
-import React, { useEffect } from "react";
+import { useState, useEffect } from "react";
+
 import { useKey } from "rooks";
+import { Row, Col, Button } from "antd";
+import { CaretLeftOutlined, CaretRightOutlined } from "@ant-design/icons";
+
+import Canvas from "./components/Canvas";
+import Label from "./components/Label";
+import FileList from "./components/FileList";
+
 import "./App.css";
-const { useState, useRef } = React;
-
-interface Annotation {
-  x: number;
-  y: number;
-  visibility: number;
-}
-
-interface AnnotationList {
-  [key: string]: Annotation;
-}
 
 const getExt = (filename: string) => {
   const pos = filename.lastIndexOf(".");
@@ -21,46 +18,46 @@ const getExt = (filename: string) => {
 
 const App = () => {
   const initValue = -1;
-
-  const [fileList, setFileList] = useState<File[]>([]);
-  const [numberOfImage, setNumberOfImage] = useState(0);
-  const [index, setIndex] = useState(0);
-  const [imageDetail, setImageDetail] = useState({
+  const initLabel = {
+    id: 0,
     filename: "",
-    width: 0,
-    height: 0,
-  });
-  const [annotation, setAnnotation] = useState<Annotation>({
     x: initValue,
     y: initValue,
     visibility: initValue,
-  });
-  const [annotationList, setAnnotationList] = useState<AnnotationList>({});
+    status: initValue,
+    isLabeled: false,
+  };
 
-  let isDrawing = false;
+  const [image, setImage] = useState<HTMLImageElement>(new Image()); // The image to display now.
+  const [fileList, setFileList] = useState<File[]>([]); // List of selected files.
+  const [numberOfImage, setNumberOfImage] = useState(-1); // The number of images.
+  const [index, setIndex] = useState(0); // The index of current file.
+  const [filename, setFilename] = useState(""); // The filename of current file.
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 }); // The size of current file.
+  const [label, setLabel] = useState<Label>(initLabel); // The label of current file
+  const [labelList, setLabelList] = useState<LabelList>({}); // The list of labels.
 
-  const imageCanvasRef = useRef<HTMLCanvasElement>(null);
-  const annotationCanvasRef = useRef<HTMLCanvasElement>(null);
-
+  // Once a directory has been selected,
+  // craete a list of the same size for label.
   useEffect(() => {
-    if (!annotationCanvasRef.current) return;
-    annotationCanvasRef.current.width = imageDetail.width;
-    annotationCanvasRef.current.height = imageDetail.height;
-  }, [imageDetail.width, imageDetail.height]);
-
-  useEffect(() => {
-    const newAnnotationList: AnnotationList = {};
-    for (const file of fileList) {
-      newAnnotationList[file.name] = {
+    const newLabelList: LabelList = {};
+    for (const [index, file] of fileList.entries()) {
+      newLabelList[file.name] = {
+        id: index,
+        filename: file.name,
         x: initValue,
         y: initValue,
         visibility: initValue,
+        status: initValue,
+        isLabeled: false,
       };
     }
-    setAnnotationList(newAnnotationList);
+    setLabelList(newLabelList);
     // eslint-disable-next-line
   }, [fileList]);
 
+  // When the index is changed,
+  // the image is redrawn and, label is update.
   useEffect(() => {
     if (fileList.length === 0) return;
     const file = fileList[index];
@@ -68,32 +65,30 @@ const App = () => {
     const img = new Image();
     img.src = window.URL.createObjectURL(file);
     img.onload = () => {
-      if (!imageCanvasRef.current) return;
-      imageCanvasRef.current.width = img.width;
-      imageCanvasRef.current.height = img.height;
-      const context = imageCanvasRef.current.getContext("2d");
-      if (!context) return;
-      context.drawImage(img, 0, 0);
-
-      setImageDetail({
-        filename: file.name,
-        width: img.width,
-        height: img.height,
-      });
+      setImage(img);
+      setFilename(file.name);
+      setImageSize({ width: img.width, height: img.height });
     };
 
     // If already annotated. Display it.
-    if (annotationList[file.name] !== undefined) {
-      const currentAnnotation = annotationList[file.name];
-      setAnnotation({
-        x: currentAnnotation.x,
-        y: currentAnnotation.y,
-        visibility: currentAnnotation.visibility,
-      });
-      drawCircle(currentAnnotation.x, currentAnnotation.y);
+    if (labelList[file.name] !== undefined) {
+      setLabel(labelList[file.name]);
     }
     // eslint-disable-next-line
   }, [index, fileList]);
+
+  // Records an index of the images that have been labeled.
+  useEffect(() => {
+    if (
+      label.x === initValue ||
+      label.y === initValue ||
+      label.visibility === initValue ||
+      label.status === initValue
+    )
+      return;
+    setLabel({ ...label, isLabeled: true });
+    // eslint-disable-next-line
+  }, [label.x, label.y, label.visibility, label.status]);
 
   const onDirectorySelected = (files: FileList | null) => {
     if (files === null) return;
@@ -110,77 +105,31 @@ const App = () => {
     setNumberOfImage(newFileList.length - 1);
   };
 
-  const nextImage = (e: any) => {
+  const setPartOfLabelList = () => {
+    setLabelList({
+      ...labelList,
+      [filename]: { ...label },
+    });
+  };
+
+  const nextImage = () => {
+    setPartOfLabelList();
     if (index === numberOfImage) setIndex(0);
     else setIndex(index + 1);
   };
 
-  const previousImage = (e: any) => {
+  const previousImage = () => {
+    setPartOfLabelList();
     if (index === 0) setIndex(numberOfImage);
     else setIndex(index - 1);
-  };
-
-  useKey("ArrowRight", nextImage);
-  useKey("ArrowLeft", previousImage);
-
-  const drawCircle = (x: number, y: number) => {
-    if (!annotationCanvasRef.current) return;
-    const context = annotationCanvasRef.current?.getContext("2d");
-    if (!context) return;
-    context.clearRect(
-      0,
-      0,
-      annotationCanvasRef.current.width,
-      annotationCanvasRef.current.height
-    );
-    if (x === initValue && y === initValue) return;
-    context.beginPath();
-    context.arc(
-      x, // Coordinates of the x-centre of the circle
-      y, // Coordinates of the y-center of the circle
-      5, // Radius
-      (0 * Math.PI) / 180, // Starting angle
-      (360 * Math.PI) / 180, // Ending angle
-      false // Direction
-    );
-    context.fillStyle = "rgba(255,0,0,1.0)";
-    context.fill();
-  };
-
-  const handleMouseDown = (x: number, y: number) => {
-    isDrawing = true;
-    drawCircle(x, y);
-  };
-
-  const handleMouseMove = (x: number, y: number) => {
-    if (!isDrawing) return;
-    drawCircle(x, y);
-  };
-
-  const handleMouseUp = (x: number, y: number) => {
-    isDrawing = false;
-    drawCircle(x, y);
-    setAnnotation({ x: x, y: y, visibility: annotation.visibility });
-    setAnnotationList({
-      ...annotationList,
-      [imageDetail.filename]: {
-        x: x,
-        y: y,
-        visibility: 0,
-      },
-    });
-  };
-
-  const onVisibilityChange = (visibility: number) => {
-    return;
   };
 
   const outputLabel = () => {
     const separator = ",";
     const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
     const as = [];
-    for (const [f, a] of Object.entries(annotationList)) {
-      as.push([f, a.visibility, a.x, a.y, 0]);
+    for (const [f, a] of Object.entries(labelList)) {
+      as.push([f, a.visibility, a.x, a.y, a.status]);
     }
     const data = as.map((a) => a.join(separator)).join("\r\n");
     const blob = new Blob([bom, data], { type: "text/csv" });
@@ -190,54 +139,63 @@ const App = () => {
     link.click();
   };
 
+  useKey("ArrowRight", nextImage);
+  useKey("ArrowLeft", previousImage);
+
   return (
     <div className="App">
-      <input
-        type="file"
-        onChange={(e) => {
-          onDirectorySelected(e.target.files !== null ? e.target.files : null);
-        }}
-        /* @ts-expect-error */
-        directory=""
-        webkitdirectory=""
-      />
-      <div>
-        <input disabled value={imageDetail.filename} id="filename" />
-        <input disabled value={imageDetail.width} id="width" />
-        <input disabled value={imageDetail.height} id="height" />
-      </div>
-      <div>
-        <input disabled value={annotation.x} id="xCoordinate" />
-        <input disabled value={annotation.y} id="yCoordinate" />
-        <input
-          onChange={(e) => onVisibilityChange(Number(e.target.value))}
-          value={annotation.visibility}
-          type="number"
-          id="visibility"
-        />
-      </div>
-      <p>
-        {index}/{numberOfImage}
-      </p>
-      <button onClick={previousImage}>Previous</button>
-      <button onClick={nextImage}>Next</button>
-      <button onClick={outputLabel}>Output Label.csv</button>
-      <div className="canvas-wrapper">
-        <canvas ref={imageCanvasRef} id="image"></canvas>
-        <canvas
-          ref={annotationCanvasRef}
-          id="annotation"
-          onMouseDown={(e) =>
-            handleMouseDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
-          }
-          onMouseUp={(e) =>
-            handleMouseUp(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
-          }
-          onMouseMove={(e) =>
-            handleMouseMove(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
-          }
-        ></canvas>
-      </div>
+      <Row gutter={16}>
+        <Col>
+          <h2>Labelingtool</h2>
+          <input
+            type="file"
+            onChange={(e) => {
+              onDirectorySelected(
+                e.target.files !== null ? e.target.files : null
+              );
+            }}
+            /* @ts-expect-error */
+            directory=""
+            webkitdirectory=""
+          />
+          <Label
+            filename={filename}
+            width={imageSize.width}
+            height={imageSize.height}
+            label={label}
+            setLabel={setLabel}
+          />
+          <p>
+            {index + 1}/{numberOfImage + 1}
+          </p>
+          <div>
+            <Button
+              onClick={previousImage}
+              shape="circle"
+              icon={<CaretLeftOutlined />}
+            ></Button>
+            <Button
+              onClick={nextImage}
+              shape="circle"
+              icon={<CaretRightOutlined />}
+            ></Button>
+          </div>
+          <FileList
+            numberOfImage={numberOfImage}
+            filename={filename}
+            label={label}
+            labelList={labelList}
+            setIndex={setIndex}
+            setLabelList={setLabelList}
+          />
+          <Button onClick={outputLabel}>Output Label.csv</Button>
+        </Col>
+        <Col>
+          <div>
+            <Canvas image={image} label={label} setLabel={setLabel}></Canvas>
+          </div>
+        </Col>
+      </Row>
     </div>
   );
 };
