@@ -11,8 +11,8 @@ type Props = {
 };
 
 const Label: FC<Props> = ({ filename, width, height, label, setLabel }) => {
-  const ballX = label.x;
-  const ballY = label.y;
+  const ballX = label.actualX;
+  const ballY = label.actualY;
   const visibility = label.visibility;
   const status = label.status;
 

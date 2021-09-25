@@ -3,6 +3,8 @@ interface Label {
   filename: string;
   x: number;
   y: number;
+  actualX: number;
+  actualY: number;
   visibility: number;
   status: number;
   isLabeled: Boolean;

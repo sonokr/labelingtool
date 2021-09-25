@@ -1,14 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { useKey } from "rooks";
-import { Row, Col, Button } from "antd";
-import { CaretLeftOutlined, CaretRightOutlined } from "@ant-design/icons";
+import { Row, Col, Button, Typography, Divider } from "antd";
+import {
+  CaretLeftOutlined,
+  CaretRightOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
 
 import Canvas from "./components/Canvas";
 import Label from "./components/Label";
 import FileList from "./components/FileList";
 
 import "./App.css";
+const { Title } = Typography;
 
 const getExt = (filename: string) => {
   const pos = filename.lastIndexOf(".");
@@ -23,10 +28,15 @@ const App = () => {
     filename: "",
     x: initValue,
     y: initValue,
+    actualX: initValue,
+    actualY: initValue,
     visibility: initValue,
     status: initValue,
     isLabeled: false,
   };
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const fileListRef = useRef<HTMLDivElement>(null);
 
   const [image, setImage] = useState<HTMLImageElement>(new Image()); // The image to display now.
   const [fileList, setFileList] = useState<File[]>([]); // List of selected files.
@@ -47,6 +57,8 @@ const App = () => {
         filename: file.name,
         x: initValue,
         y: initValue,
+        actualX: initValue,
+        actualY: initValue,
         visibility: initValue,
         status: initValue,
         isLabeled: false,
@@ -91,6 +103,7 @@ const App = () => {
   }, [label.x, label.y, label.visibility, label.status]);
 
   const onDirectorySelected = (files: FileList | null) => {
+    console.log(inputRef.current);
     if (files === null) return;
     const acceptExt = ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"];
     const compare = (a: File, b: File) => {
@@ -103,6 +116,10 @@ const App = () => {
       .sort(compare);
     setFileList(newFileList);
     setNumberOfImage(newFileList.length - 1);
+  };
+
+  const clearSelectedDirectory = () => {
+    inputRef.current!.files = null;
   };
 
   const setPartOfLabelList = () => {
@@ -129,7 +146,7 @@ const App = () => {
     const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
     const as = [];
     for (const [f, a] of Object.entries(labelList)) {
-      as.push([f, a.visibility, a.x, a.y, a.status]);
+      as.push([f, a.visibility, a.actualX, a.actualY, a.status]);
     }
     const data = as.map((a) => a.join(separator)).join("\r\n");
     const blob = new Blob([bom, data], { type: "text/csv" });
@@ -144,20 +161,63 @@ const App = () => {
 
   return (
     <div className="App">
-      <Row gutter={16}>
-        <Col>
-          <h2>Labelingtool</h2>
+      <Row>
+        <div className="title-wrapper">
+          <Title level={2} className="title">
+            LabelingTool
+          </Title>{" "}
+          <p className="description">for TrackNet by DigIT</p>
+        </div>
+      </Row>
+      <Row>
+        <div className="directory-select-button">
           <input
             type="file"
+            ref={inputRef}
             onChange={(e) => {
               onDirectorySelected(
                 e.target.files !== null ? e.target.files : null
               );
             }}
+            style={{ display: "none" }}
             /* @ts-expect-error */
             directory=""
             webkitdirectory=""
           />
+          <Button
+            icon={<UploadOutlined />}
+            onClick={() => {
+              inputRef.current!.click();
+            }}
+          >
+            Select Directory
+          </Button>
+          <Button icon={<UploadOutlined />} onClick={clearSelectedDirectory}>
+            Clear(Not implemented)
+          </Button>
+          {fileList.length === 0 ? (
+            <p>ディレクトリを選択してください．</p>
+          ) : (
+            <p>{fileList.length}個のファイルが選択されました．</p>
+          )}
+        </div>
+      </Row>
+      <Divider />
+      <Row gutter={16}>
+        <Col>
+          <div ref={fileListRef}>
+            <FileList
+              numberOfImage={numberOfImage}
+              filename={filename}
+              label={label}
+              labelList={labelList}
+              setIndex={setIndex}
+              setLabelList={setLabelList}
+            />
+            <Button onClick={outputLabel}>Output Label.csv</Button>
+          </div>
+        </Col>
+        <Col>
           <Label
             filename={filename}
             width={imageSize.width}
@@ -180,22 +240,22 @@ const App = () => {
               icon={<CaretRightOutlined />}
             ></Button>
           </div>
-          <FileList
-            numberOfImage={numberOfImage}
-            filename={filename}
-            label={label}
-            labelList={labelList}
-            setIndex={setIndex}
-            setLabelList={setLabelList}
-          />
-          <Button onClick={outputLabel}>Output Label.csv</Button>
-        </Col>
-        <Col>
           <div>
-            <Canvas image={image} label={label} setLabel={setLabel}></Canvas>
+            <Canvas
+              leftObjectWidth={
+                fileListRef.current === null
+                  ? 0
+                  : Number(fileListRef.current!.scrollWidth)
+              }
+              image={image}
+              label={label}
+              setLabel={setLabel}
+            ></Canvas>
           </div>
         </Col>
       </Row>
+      <Divider />
+      <p>DigIT inc.</p>
     </div>
   );
 };
