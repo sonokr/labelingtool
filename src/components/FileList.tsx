@@ -45,7 +45,7 @@ const FileList: FC<Props> = ({
 
   return (
     <>
-      <div style={{ height: "300px", overflow: "auto" }}>
+      <div style={{ height: "70vh", overflow: "auto" }}>
         <InfiniteScroll
           initialLoad={false}
           pageStart={0}

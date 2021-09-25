@@ -51,3 +51,16 @@
   top: 0;
   left: 0;
 }
+
+.title-wrapper {
+  text-align: center;
+  flex: auto;
+}
+
+.title {
+  margin-bottom: 0 !important;
+}
+
+.directory-select-button {
+  flex: auto;
+}
