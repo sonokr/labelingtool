@@ -9,14 +9,23 @@ type Props = {
 };
 
 const Canvas: FC<Props> = ({ leftObjectWidth, image, label, setLabel }) => {
-  console.log(leftObjectWidth);
   const width = image.width;
   const height = image.height;
 
   const ballX = label.x;
   const ballY = label.y;
 
-  const scale = (window.innerWidth - 3.6 * leftObjectWidth) / width;
+  const scale = (window.innerWidth - leftObjectWidth) / width;
+  console.log("screen width", window.screenX);
+  console.log("screen height", window.screenY);
+  console.log("scale = window.innerWidth - leftObjectWidth / width");
+  console.log(
+    `${scale} = ${window.innerWidth} - ${leftObjectWidth} / ${width}`
+  );
+  console.log("利用可能なwidth", window.innerWidth - leftObjectWidth);
+  console.log("利用可能なheight", window.innerHeight);
+  console.log("スケール後の画像のwidth", scale * width);
+  console.log("スケール後の画像のheight", scale * height);
 
   const setLabelCoords = (x: number, y: number) =>
     setLabel({
@@ -44,12 +53,16 @@ const Canvas: FC<Props> = ({ leftObjectWidth, image, label, setLabel }) => {
         handleMouseUp(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
       }
     >
-      <Stage width={width * scale} height={height * scale}>
+      <Stage
+        width={width * scale}
+        height={height * scale}
+        scale={{ x: scale, y: scale }}
+      >
         <Layer>
           <Kimage
             image={image}
-            width={width * scale}
-            height={height * scale}
+            width={width}
+            height={height}
             x={0}
             y={0}
           ></Kimage>
