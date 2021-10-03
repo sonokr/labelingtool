@@ -166,7 +166,7 @@ const App = () => {
           <Title level={2} className="title">
             LabelingTool
           </Title>{" "}
-          <p className="description">for TrackNet by DigIT</p>
+          <p className="description">for TrackNet</p>
         </div>
       </Row>
       <Row>
@@ -255,7 +255,7 @@ const App = () => {
         </Col>
       </Row>
       <Divider />
-      <p>DigIT inc.</p>
+      <p>DigIT</p>
     </div>
   );
 };
