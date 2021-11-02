@@ -1,5 +1,5 @@
 import { memo, FC, SetStateAction, Dispatch } from "react";
-import { Stage, Layer, Circle, Image as Kimage } from "react-konva";
+import { Stage, Layer, Circle, Rect, Image as Kimage } from "react-konva";
 
 type Props = {
   image: HTMLImageElement;
@@ -14,9 +14,8 @@ const Canvas: FC<Props> = ({ image, label, setLabel }) => {
   const ballX = label.x;
   const ballY = label.y;
 
-  const scale = (window.innerWidth * 0.8) / width; // marginを考慮
-
-  console.log(scale);
+  const scale = ((window.innerWidth - 60) * 0.8) / width; // marginを考慮
+  console.log(image.width);
 
   const setLabelCoords = (x: number, y: number) =>
     setLabel({
@@ -35,7 +34,7 @@ const Canvas: FC<Props> = ({ image, label, setLabel }) => {
     setLabelCoords(x, y);
   };
 
-  return (
+  const imageCanvas = (
     <div
       onMouseDown={(e) =>
         handleMouseDown(e.nativeEvent.offsetX, e.nativeEvent.offsetY)
@@ -60,6 +59,25 @@ const Canvas: FC<Props> = ({ image, label, setLabel }) => {
       </Stage>
     </div>
   );
+
+  const skeltonWidth = (window.innerWidth - 60) * 0.8;
+
+  const skelton = (
+    <div>
+      <Stage width={skeltonWidth} height={skeltonWidth * (9 / 16)}>
+        <Layer>
+          <Rect
+            stroke="black"
+            strokeWidth={1}
+            width={skeltonWidth}
+            height={skeltonWidth * (9 / 16)}
+          />
+        </Layer>
+      </Stage>
+    </div>
+  );
+
+  return width !== 0 ? imageCanvas : skelton;
 };
 
 export default memo(Canvas);
