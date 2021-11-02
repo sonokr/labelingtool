@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 import { useKey } from "rooks";
-import { Row, Col, Button, Typography, Divider } from "antd";
+import { Row, Col, Button, Typography, Divider, Collapse } from "antd";
 import {
   CaretLeftOutlined,
   CaretRightOutlined,
@@ -13,7 +13,9 @@ import Label from "./components/Label";
 import FileList from "./components/FileList";
 
 import "./App.css";
+
 const { Title } = Typography;
+const { Panel } = Collapse;
 
 const getExt = (filename: string) => {
   const pos = filename.lastIndexOf(".");
@@ -202,29 +204,15 @@ const App = () => {
           )}
         </div>
       </Row>
+      <Collapse accordion>
+        <Panel header="使い方" key="1">
+          <p>テキストはここ</p>
+        </Panel>
+      </Collapse>
       <Divider />
-      <Row gutter={16}>
+      <Row>
         <Col>
-          <div ref={fileListRef}>
-            <FileList
-              numberOfImage={numberOfImage}
-              filename={filename}
-              label={label}
-              labelList={labelList}
-              setIndex={setIndex}
-              setLabelList={setLabelList}
-            />
-            <Button onClick={outputLabel}>Output Label.csv</Button>
-          </div>
-        </Col>
-        <Col>
-          <Label
-            filename={filename}
-            width={imageSize.width}
-            height={imageSize.height}
-            label={label}
-            setLabel={setLabel}
-          />
+          <div>Current Image</div>
           <p>
             {index + 1}/{numberOfImage + 1}
           </p>
@@ -240,17 +228,30 @@ const App = () => {
               icon={<CaretRightOutlined />}
             ></Button>
           </div>
+          <Label
+            filename={filename}
+            width={imageSize.width}
+            height={imageSize.height}
+            label={label}
+            setLabel={setLabel}
+          />
           <div>
-            <Canvas
-              leftObjectWidth={
-                fileListRef.current === null
-                  ? 0
-                  : Number(fileListRef.current!.scrollWidth)
-              }
-              image={image}
+            <Canvas image={image} label={label} setLabel={setLabel}></Canvas>
+          </div>
+        </Col>
+      </Row>
+      <Row gutter={16}>
+        <Col>
+          <div ref={fileListRef}>
+            <FileList
+              numberOfImage={numberOfImage}
+              filename={filename}
               label={label}
-              setLabel={setLabel}
-            ></Canvas>
+              labelList={labelList}
+              setIndex={setIndex}
+              setLabelList={setLabelList}
+            />
+            <Button onClick={outputLabel}>Output Label.csv</Button>
           </div>
         </Col>
       </Row>

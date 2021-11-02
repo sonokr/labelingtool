@@ -2,21 +2,21 @@ import { memo, FC, SetStateAction, Dispatch } from "react";
 import { Stage, Layer, Circle, Image as Kimage } from "react-konva";
 
 type Props = {
-  leftObjectWidth: number;
   image: HTMLImageElement;
   label: Label;
   setLabel: Dispatch<SetStateAction<Label>>;
 };
 
-const Canvas: FC<Props> = ({ leftObjectWidth, image, label, setLabel }) => {
-  console.log(leftObjectWidth);
+const Canvas: FC<Props> = ({ image, label, setLabel }) => {
   const width = image.width;
   const height = image.height;
 
   const ballX = label.x;
   const ballY = label.y;
 
-  const scale = (window.innerWidth - 3.6 * leftObjectWidth) / width;
+  const scale = (window.innerWidth * 0.8) / width; // marginを考慮
+
+  console.log(scale);
 
   const setLabelCoords = (x: number, y: number) =>
     setLabel({
