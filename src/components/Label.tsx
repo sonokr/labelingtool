@@ -1,6 +1,8 @@
 import { FC, Dispatch, SetStateAction } from "react";
 
-import { Input, Radio } from "antd";
+import { Typography, Radio } from "antd";
+
+const { Text } = Typography;
 
 type Props = {
   filename: string;
@@ -17,40 +19,35 @@ const Label: FC<Props> = ({ filename, width, height, label, setLabel }) => {
   const status = label.status;
 
   return (
-    <table>
-      <tbody>
+    <>
+      <table>
         <tr>
-          <th>Name</th>
           <td>
-            <Input disabled value={filename} id="filename" />
+            <Text strong>Image detail</Text>
+          </td>
+          <td>⊳</td>
+          <td>
+            <Text code>
+              {filename ? filename : "null"}, ({width}, {height})px
+            </Text>
           </td>
         </tr>
         <tr>
-          <th>Width</th>
           <td>
-            <Input disabled value={width} id="width" />
+            <Text strong>Ball coordinates</Text>
+          </td>
+          <td>⊳</td>
+          <td>
+            <Text code>
+              (x, y) = ({ballX}, {ballY})px
+            </Text>
           </td>
         </tr>
         <tr>
-          <th>Height</th>
           <td>
-            <Input disabled value={height} id="height" />
+            <Text strong>Visibility</Text>
           </td>
-        </tr>
-        <tr>
-          <th>X coordinate</th>
-          <td>
-            <Input disabled value={ballX} id="xCoordinate" />
-          </td>
-        </tr>
-        <tr>
-          <th>Y coordinate</th>
-          <td>
-            <Input disabled value={ballY} id="yCoordinate" />
-          </td>
-        </tr>
-        <tr>
-          <th>Visibility</th>
+          <td>⊳</td>
           <td>
             <Radio.Group
               options={[
@@ -71,7 +68,10 @@ const Label: FC<Props> = ({ filename, width, height, label, setLabel }) => {
           </td>
         </tr>
         <tr>
-          <th>Status</th>
+          <td>
+            <Text strong>Status</Text>
+          </td>
+          <td>⊳</td>
           <td>
             <Radio.Group
               options={[
@@ -90,8 +90,8 @@ const Label: FC<Props> = ({ filename, width, height, label, setLabel }) => {
             />
           </td>
         </tr>
-      </tbody>
-    </table>
+      </table>
+    </>
   );
 };
 

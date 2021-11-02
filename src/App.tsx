@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 import { useKey } from "rooks";
-import { Row, Col, Button, Typography, Divider } from "antd";
+import { Layout, Row, Col, Button, Typography } from "antd";
 import {
   CaretLeftOutlined,
   CaretRightOutlined,
@@ -13,11 +13,13 @@ import Label from "./components/Label";
 import FileList from "./components/FileList";
 
 import "./App.css";
+
+const { Sider } = Layout;
 const { Title } = Typography;
 
 const getExt = (filename: string) => {
   const pos = filename.lastIndexOf(".");
-  if (pos === -1) return "";
+  if (pos === -1) return "10px";
   return filename.slice(pos + 1);
 };
 
@@ -37,6 +39,7 @@ const App = () => {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const fileListRef = useRef<HTMLDivElement>(null);
+  const inputLabelRef = useRef<HTMLInputElement>(null);
 
   const [image, setImage] = useState<HTMLImageElement>(new Image()); // The image to display now.
   const [fileList, setFileList] = useState<File[]>([]); // List of selected files.
@@ -102,6 +105,11 @@ const App = () => {
     // eslint-disable-next-line
   }, [label.x, label.y, label.visibility, label.status]);
 
+  let numberOfLabeledImage = 0;
+  for (const key in labelList) {
+    if (labelList[key].isLabeled) numberOfLabeledImage++;
+  }
+
   const onDirectorySelected = (files: FileList | null) => {
     console.log(inputRef.current);
     if (files === null) return;
@@ -116,10 +124,6 @@ const App = () => {
       .sort(compare);
     setFileList(newFileList);
     setNumberOfImage(newFileList.length - 1);
-  };
-
-  const clearSelectedDirectory = () => {
-    inputRef.current!.files = null;
   };
 
   const setPartOfLabelList = () => {
@@ -141,6 +145,11 @@ const App = () => {
     else setIndex(index - 1);
   };
 
+  const onLabelSelected = (files: FileList | null) => {
+    if (files === null) return;
+    console.log(files[0]);
+  };
+
   const outputLabel = () => {
     const separator = ",";
     const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
@@ -160,74 +169,63 @@ const App = () => {
   useKey("ArrowLeft", previousImage);
 
   return (
-    <div className="App">
-      <Row>
-        <div className="title-wrapper">
-          <Title level={2} className="title">
-            LabelingTool
-          </Title>{" "}
-          <p className="description">for TrackNet</p>
-        </div>
-      </Row>
-      <Row>
-        <div className="directory-select-button">
-          <input
-            type="file"
-            ref={inputRef}
-            onChange={(e) => {
-              onDirectorySelected(
-                e.target.files !== null ? e.target.files : null
-              );
-            }}
-            style={{ display: "none" }}
-            /* @ts-expect-error */
-            directory=""
-            webkitdirectory=""
-          />
-          <Button
-            icon={<UploadOutlined />}
-            onClick={() => {
-              inputRef.current!.click();
-            }}
-          >
-            Select Directory
-          </Button>
-          <Button icon={<UploadOutlined />} onClick={clearSelectedDirectory}>
-            Clear(Not implemented)
-          </Button>
-          {fileList.length === 0 ? (
-            <p>ディレクトリを選択してください．</p>
-          ) : (
-            <p>{fileList.length}個のファイルが選択されました．</p>
-          )}
-        </div>
-      </Row>
-      <Divider />
-      <Row gutter={16}>
-        <Col>
-          <div ref={fileListRef}>
-            <FileList
-              numberOfImage={numberOfImage}
-              filename={filename}
-              label={label}
-              labelList={labelList}
-              setIndex={setIndex}
-              setLabelList={setLabelList}
-            />
-            <Button onClick={outputLabel}>Output Label.csv</Button>
+    <Layout style={{ background: "#fff", margin: "30px 0px" }}>
+      <Sider
+        className="App"
+        breakpoint="lg"
+        style={{ background: "#fff", margin: "0px 30px" }}
+      >
+        <Row>
+          <div className="title-wrapper">
+            <Title level={3} className="title">
+              LabelingTool
+            </Title>{" "}
+            <p className="description">for TrackNet</p>
           </div>
-        </Col>
-        <Col>
-          <Label
-            filename={filename}
-            width={imageSize.width}
-            height={imageSize.height}
-            label={label}
-            setLabel={setLabel}
-          />
-          <p>
-            {index + 1}/{numberOfImage + 1}
-          </p>
+        </Row>
+        <div style={{ marginBottom: "15px" }}>
+          <a
+            href="https://digit-sport.notion.site/Labelingtool-for-TrackNet-076774bea4634a968c250c779f5efb41"
+            target="_blank"
+            rel="noreferrer"
+          >
+            How to use
+          </a>
+        </div>
+        <Row>
+          <div className="directory-select-button">
+            <input
+              type="file"
+              ref={inputRef}
+              onChange={(e) => {
+                onDirectorySelected(
+                  e.target.files !== null ? e.target.files : null
+                );
+              }}
+              style={{ display: "none" }}
+              /* @ts-expect-error */
+              directory=""
+              webkitdirectory=""
+            />
+            <Button
+              icon={<UploadOutlined />}
+              onClick={() => {
+                inputRef.current!.click();
+              }}
+            >
+              Select Directory
+            </Button>
+            {fileList.length === 0 ? (
+              <p>No file selected.</p>
+            ) : (
+              <p>{fileList.length} files selected.</p>
+            )}
+          </div>
+        </Row>
+        <div style={{ marginBottom: "15px" }}>
+          <div>
+            Current Image: {index + 1}/{numberOfImage + 1}
+          </div>
           <div>
             <Button
               onClick={previousImage}
@@ -240,23 +238,58 @@ const App = () => {
               icon={<CaretRightOutlined />}
             ></Button>
           </div>
+        </div>
+        <div style={{ marginBottom: "15px" }}>
           <div>
-            <Canvas
-              leftObjectWidth={
-                fileListRef.current === null
-                  ? 0
-                  : Number(fileListRef.current!.scrollWidth)
-              }
-              image={image}
+            Labeled Images: {numberOfLabeledImage + 1}/{numberOfImage + 1}
+          </div>
+          <input
+            type="file"
+            accept=".csv"
+            ref={inputLabelRef}
+            style={{ display: "none" }}
+            onChange={(e) =>
+              onLabelSelected(e.target.files !== null ? e.target.files : null)
+            }
+          />
+          <Button
+            style={{ width: "11em" }}
+            onClick={() => inputLabelRef.current!.click()}
+          >
+            Load Label.csv
+          </Button>
+          <Button style={{ width: "11em" }} onClick={() => outputLabel()}>
+            Output Label.csv
+          </Button>
+        </div>
+        <div ref={fileListRef}>
+          <FileList
+            numberOfImage={numberOfImage}
+            filename={filename}
+            label={label}
+            labelList={labelList}
+            setIndex={setIndex}
+            setLabelList={setLabelList}
+          />
+        </div>
+      </Sider>
+      <Layout style={{ background: "#fff" }}>
+        <Row>
+          <Col>
+            <Label
+              filename={filename}
+              width={imageSize.width}
+              height={imageSize.height}
               label={label}
               setLabel={setLabel}
-            ></Canvas>
-          </div>
-        </Col>
-      </Row>
-      <Divider />
-      <p>DigIT</p>
-    </div>
+            />
+            <div>
+              <Canvas image={image} label={label} setLabel={setLabel}></Canvas>
+            </div>
+          </Col>
+        </Row>
+      </Layout>
+    </Layout>
   );
 };
 
