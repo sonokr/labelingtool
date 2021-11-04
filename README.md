@@ -1,4 +1,6 @@
-# Getting Started with Create React App
+# Labelingtool
+
+TrackNet用のラベリングツールです．[サンプルサイト](https://labelingtool-digit.netlify.app/) [使い方](https://digit-sport.notion.site/Labelingtool-076774bea4634a968c250c779f5efb41)
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

@@ -21,11 +21,6 @@ const FileList: FC<Props> = ({
   setIndex,
   setLabelList,
 }) => {
-  let numberOfLabeledImage = 0;
-  for (const key in labelList) {
-    if (labelList[key].isLabeled) numberOfLabeledImage++;
-  }
-
   const labelListToDisplay = [];
   for (const [key, value] of Object.entries(labelList)) {
     labelListToDisplay.push(
@@ -45,7 +40,11 @@ const FileList: FC<Props> = ({
 
   return (
     <>
+<<<<<<< HEAD
       <div style={{ height: "70vh", overflow: "auto" }}>
+=======
+      <div style={{ height: "50vh", overflow: "auto" }}>
+>>>>>>> master
         <InfiniteScroll
           initialLoad={false}
           pageStart={0}
@@ -71,22 +70,6 @@ const FileList: FC<Props> = ({
             )}
           ></List>
         </InfiniteScroll>
-      </div>
-      <div>
-        <div>
-          <b>
-            All images are{" "}
-            {numberOfLabeledImage !== numberOfImage ? (
-              <Text type="danger">NOT </Text>
-            ) : (
-              ""
-            )}
-            labeled.
-          </b>
-        </div>
-        <Text>
-          Labeded images: {numberOfLabeledImage}/{numberOfImage}
-        </Text>
       </div>
     </>
   );

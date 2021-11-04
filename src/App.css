@@ -61,6 +61,24 @@
   margin-bottom: 0 !important;
 }
 
+<<<<<<< HEAD
 .directory-select-button {
   flex: auto;
 }
+=======
+.description {
+  margin-top: 0 !important;
+}
+
+.directory-select-button {
+  flex: auto;
+}
+
+.test {
+  margin-top: 0;
+  margin-bottom: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+>>>>>>> master
