@@ -40,11 +40,7 @@ const FileList: FC<Props> = ({
 
   return (
     <>
-<<<<<<< HEAD
-      <div style={{ height: "70vh", overflow: "auto" }}>
-=======
       <div style={{ height: "50vh", overflow: "auto" }}>
->>>>>>> master
         <InfiniteScroll
           initialLoad={false}
           pageStart={0}
