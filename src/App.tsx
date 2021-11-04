@@ -43,12 +43,13 @@ const App = () => {
 
   const [image, setImage] = useState<HTMLImageElement>(new Image()); // The image to display now.
   const [fileList, setFileList] = useState<File[]>([]); // List of selected files.
-  const [numberOfImage, setNumberOfImage] = useState(-1); // The number of images.
+  const [numberOfImage, setNumberOfImage] = useState(0); // The number of images.
   const [index, setIndex] = useState(0); // The index of current file.
   const [filename, setFilename] = useState(""); // The filename of current file.
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 }); // The size of current file.
   const [label, setLabel] = useState<Label>(initLabel); // The label of current file
   const [labelList, setLabelList] = useState<LabelList>({}); // The list of labels.
+  const [numberOfLabeledImage, setNumberOfLabeledImage] = useState(0);
 
   // Once a directory has been selected,
   // craete a list of the same size for label.
@@ -105,10 +106,13 @@ const App = () => {
     // eslint-disable-next-line
   }, [label.x, label.y, label.visibility, label.status]);
 
-  let numberOfLabeledImage = 0;
-  for (const key in labelList) {
-    if (labelList[key].isLabeled) numberOfLabeledImage++;
-  }
+  useEffect(() => {
+    let tempNumberOfLabeledImage = 0;
+    for (const key in labelList) {
+      if (labelList[key].isLabeled) tempNumberOfLabeledImage++;
+    }
+    setNumberOfLabeledImage(tempNumberOfLabeledImage);
+  }, [label.isLabeled, labelList]);
 
   const onDirectorySelected = (files: FileList | null) => {
     console.log(inputRef.current);
@@ -123,7 +127,7 @@ const App = () => {
       .filter((file) => acceptExt.includes(getExt(file.name)))
       .sort(compare);
     setFileList(newFileList);
-    setNumberOfImage(newFileList.length - 1);
+    setNumberOfImage(newFileList.length);
   };
 
   const setPartOfLabelList = () => {
@@ -135,13 +139,13 @@ const App = () => {
 
   const nextImage = () => {
     setPartOfLabelList();
-    if (index === numberOfImage) setIndex(0);
+    if (index === numberOfImage - 1) setIndex(0);
     else setIndex(index + 1);
   };
 
   const previousImage = () => {
     setPartOfLabelList();
-    if (index === 0) setIndex(numberOfImage);
+    if (index === 0) setIndex(numberOfImage - 1);
     else setIndex(index - 1);
   };
 
@@ -224,7 +228,7 @@ const App = () => {
         </Row>
         <div style={{ marginBottom: "15px" }}>
           <div>
-            Current Image: {index + 1}/{numberOfImage + 1}
+            Current Image: {numberOfImage === 0 ? 0 : index + 1}/{numberOfImage}
           </div>
           <div>
             <Button
@@ -241,7 +245,7 @@ const App = () => {
         </div>
         <div style={{ marginBottom: "15px" }}>
           <div>
-            Labeled Images: {numberOfLabeledImage + 1}/{numberOfImage + 1}
+            Labeled Images: {numberOfLabeledImage}/{numberOfImage}
           </div>
           <input
             type="file"
