@@ -11,19 +11,16 @@ const Canvas: FC<Props> = ({ image, label, setLabel }) => {
   const width = image.width;
   const height = image.height;
 
-  const ballX = label.x;
-  const ballY = label.y;
-
   const scale = ((window.innerWidth - 60) * 0.8) / width; // marginを考慮
-  console.log(image.width);
+
+  const ballX = label.x * scale;
+  const ballY = label.y * scale;
 
   const setLabelCoords = (x: number, y: number) =>
     setLabel({
       ...label,
-      x: x,
-      y: y,
-      actualX: (x * (1 / scale)) | 0,
-      actualY: (y * (1 / scale)) | 0,
+      x: (x * (1 / scale)) | 0,
+      y: (y * (1 / scale)) | 0,
     });
 
   const handleMouseDown = (x: number, y: number) => {
