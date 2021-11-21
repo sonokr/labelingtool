@@ -12,34 +12,29 @@ import Canvas from "./components/Canvas";
 import Label from "./components/Label";
 import FileList from "./components/FileList";
 
+import { compare, makeBlob, getExt, isLabelCorrect } from "./lib/helpers";
+import { makeLabelList, readLabelFile } from "./lib/label";
+import { sleep } from "./lib/sleep";
+
 import "./App.css";
 
 const { Sider } = Layout;
 const { Title } = Typography;
 
-const getExt = (filename: string) => {
-  const pos = filename.lastIndexOf(".");
-  if (pos === -1) return "10px";
-  return filename.slice(pos + 1);
+const initValue = -1;
+const initLabel = {
+  id: 0,
+  filename: "",
+  x: initValue,
+  y: initValue,
+  visibility: initValue,
+  status: initValue,
+  isLabeled: false,
 };
 
 const App = () => {
-  const initValue = -1;
-  const initLabel = {
-    id: 0,
-    filename: "",
-    x: initValue,
-    y: initValue,
-    actualX: initValue,
-    actualY: initValue,
-    visibility: initValue,
-    status: initValue,
-    isLabeled: false,
-  };
-
   const inputRef = useRef<HTMLInputElement>(null);
   const fileListRef = useRef<HTMLDivElement>(null);
-  const inputLabelRef = useRef<HTMLInputElement>(null);
 
   const [image, setImage] = useState<HTMLImageElement>(new Image()); // The image to display now.
   const [fileList, setFileList] = useState<File[]>([]); // List of selected files.
@@ -49,31 +44,46 @@ const App = () => {
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 }); // The size of current file.
   const [label, setLabel] = useState<Label>(initLabel); // The label of current file
   const [labelList, setLabelList] = useState<LabelList>({}); // The list of labels.
+  const [labelFile, setLabelFile] = useState<File>();
   const [numberOfLabeledImage, setNumberOfLabeledImage] = useState(0);
 
-  // Once a directory has been selected,
-  // craete a list of the same size for label.
+  // ラベルリストを初期化する
+  // 画像の枚数と同じサイズのラベルリストを初期化する
+  // ラベルファイルが存在する場合は，それを読み込む
   useEffect(() => {
-    const newLabelList: LabelList = {};
-    for (const [index, file] of fileList.entries()) {
-      newLabelList[file.name] = {
-        id: index,
-        filename: file.name,
-        x: initValue,
-        y: initValue,
-        actualX: initValue,
-        actualY: initValue,
-        visibility: initValue,
-        status: initValue,
-        isLabeled: false,
-      };
+    let newLabelList: LabelList = {};
+    if (labelFile) {
+      console.log('"Label.csv" was found.');
+      newLabelList = readLabelFile(labelFile);
+    } else {
+      console.log("Label.csv was not found.");
+      newLabelList = makeLabelList(fileList);
     }
     setLabelList(newLabelList);
-    // eslint-disable-next-line
-  }, [fileList]);
 
-  // When the index is changed,
-  // the image is redrawn and, label is update.
+    (async () => {
+      await sleep(100);
+      if (fileList.length === 0) return;
+      const filename = fileList[index].name;
+      if (newLabelList[filename] === undefined) return;
+      setLabel(newLabelList[filename]);
+    })();
+
+    console.log(label);
+
+    // eslint-disable-next-line
+  }, [fileList, labelFile]);
+
+  // labelListが初期化されたとき，labelを更新する
+  useEffect(() => {
+    if (fileList.length === 0) return;
+    if (labelList[fileList[index].name] === undefined) return;
+    setLabel(labelList[fileList[index].name]);
+    console.log("Label was updated.");
+  }, [index, fileList, labelList]);
+
+  // 画像のインデックスが変更されたとき
+  // 画像を再描画し，ラベルを更新する
   useEffect(() => {
     if (fileList.length === 0) return;
     const file = fileList[index];
@@ -86,26 +96,19 @@ const App = () => {
       setImageSize({ width: img.width, height: img.height });
     };
 
-    // If already annotated. Display it.
-    if (labelList[file.name] !== undefined) {
-      setLabel(labelList[file.name]);
-    }
-    // eslint-disable-next-line
-  }, [index, fileList]);
+    console.log("Canvas was redrawn.");
+  }, [index, fileList, labelList]);
 
-  // Records an index of the images that have been labeled.
+  // ラベル付けが完了した画像のインデックスを記録する
   useEffect(() => {
-    if (
-      label.x === initValue ||
-      label.y === initValue ||
-      label.visibility === initValue ||
-      label.status === initValue
-    )
+    if (!isLabelCorrect([label.x, label.y, label.visibility, label.status]))
       return;
     setLabel({ ...label, isLabeled: true });
+    console.log("This image was labeled correctly.");
     // eslint-disable-next-line
   }, [label.x, label.y, label.visibility, label.status]);
 
+  // ラベル付けが完了した画像の枚数を記録する
   useEffect(() => {
     let tempNumberOfLabeledImage = 0;
     for (const key in labelList) {
@@ -115,19 +118,21 @@ const App = () => {
   }, [label.isLabeled, labelList]);
 
   const onDirectorySelected = (files: FileList | null) => {
-    console.log(inputRef.current);
     if (files === null) return;
+
     const acceptExt = ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"];
-    const compare = (a: File, b: File) => {
-      if (a.name > b.name) return 1;
-      else if (b.name > a.name) return -1;
-      return 0;
-    };
     const newFileList = Array.from(files)
-      .filter((file) => acceptExt.includes(getExt(file.name)))
+      .filter((_) => acceptExt.includes(getExt(_.name)))
       .sort(compare);
+
     setFileList(newFileList);
     setNumberOfImage(newFileList.length);
+
+    const labelFile = Array.from(files)
+      .filter((_) => "Label.csv".includes(_.name))
+      .sort()[0];
+    if (!labelFile) return;
+    setLabelFile(labelFile);
   };
 
   const setPartOfLabelList = () => {
@@ -149,20 +154,8 @@ const App = () => {
     else setIndex(index - 1);
   };
 
-  const onLabelSelected = (files: FileList | null) => {
-    if (files === null) return;
-    console.log(files[0]);
-  };
-
   const outputLabel = () => {
-    const separator = ",";
-    const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
-    const as = [];
-    for (const [f, a] of Object.entries(labelList)) {
-      as.push([f, a.visibility, a.actualX, a.actualY, a.status]);
-    }
-    const data = as.map((a) => a.join(separator)).join("\r\n");
-    const blob = new Blob([bom, data], { type: "text/csv" });
+    const blob = makeBlob(labelList);
     const link = document.createElement("a");
     link.download = "Label.csv";
     link.href = URL.createObjectURL(blob);
@@ -247,21 +240,6 @@ const App = () => {
           <div>
             Labeled Images: {numberOfLabeledImage}/{numberOfImage}
           </div>
-          <input
-            type="file"
-            accept=".csv"
-            ref={inputLabelRef}
-            style={{ display: "none" }}
-            onChange={(e) =>
-              onLabelSelected(e.target.files !== null ? e.target.files : null)
-            }
-          />
-          <Button
-            style={{ width: "11em" }}
-            onClick={() => inputLabelRef.current!.click()}
-          >
-            Load Label.csv
-          </Button>
           <Button style={{ width: "11em" }} onClick={() => outputLabel()}>
             Output Label.csv
           </Button>
